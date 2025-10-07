@@ -27,17 +27,25 @@ function createBoard() {
 }
 
 function handleCellClick(e) {
-  if (gameOver) return;
+  if (gameOver || currentPlayer !== 'black') return;
   const row = parseInt(e.target.dataset.row);
   const col = parseInt(e.target.dataset.col);
   if (board[row][col] !== '') return;
 
-  board[row][col] = currentPlayer;
-  e.target.classList.add(currentPlayer);
+  makeMove(row, col, 'black');
+  if (!gameOver) {
+    setTimeout(aiMove, 300);
+  }
+}
 
-  if (checkWin(row, col)) {
-    statusElement.innerHTML = `Player <strong>${capitalize(currentPlayer)}</strong> wins! 🎉`;
-    updateScore(currentPlayer);
+function makeMove(row, col, player) {
+  const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+  board[row][col] = player;
+  cell.classList.add(player);
+
+  if (checkWin(row, col, player)) {
+    statusElement.innerHTML = `Player <strong>${capitalize(player)}</strong> wins! 🎉`;
+    updateScore(player);
     gameOver = true;
     return;
   }
@@ -46,25 +54,62 @@ function handleCellClick(e) {
   statusElement.innerHTML = `Current Turn: Player <strong>${capitalize(currentPlayer)}</strong>`;
 }
 
-function checkWin(row, col) {
+function aiMove() {
+  const moves = getAvailableMoves();
+  if (moves.length === 0) return;
+
+  const best = pickSmartMove(moves) || moves[Math.floor(Math.random() * moves.length)];
+  makeMove(best.row, best.col, 'white');
+}
+
+function getAvailableMoves() {
+  const moves = [];
+  for (let i = 0; i < boardSize; i++) {
+    for (let j = 0; j < boardSize; j++) {
+      if (board[i][j] === '') {
+        moves.push({ row: i, col: j });
+      }
+    }
+  }
+  return moves;
+}
+
+function pickSmartMove(moves) {
+  for (const move of moves) {
+    board[move.row][move.col] = 'white';
+    if (checkWin(move.row, move.col, 'white')) {
+      board[move.row][move.col] = '';
+      return move;
+    }
+    board[move.row][move.col] = '';
+
+    board[move.row][move.col] = 'black';
+    if (checkWin(move.row, move.col, 'black')) {
+      board[move.row][move.col] = '';
+      return move;
+    }
+    board[move.row][move.col] = '';
+  }
+  return null;
+}
+
+function checkWin(row, col, player) {
   return (
-    countConsecutive(row, col, 0, 1) + countConsecutive(row, col, 0, -1) > 4 ||
-    countConsecutive(row, col, 1, 0) + countConsecutive(row, col, -1, 0) > 4 ||
-    countConsecutive(row, col, 1, 1) + countConsecutive(row, col, -1, -1) > 4 ||
-    countConsecutive(row, col, 1, -1) + countConsecutive(row, col, -1, 1) > 4
+    countConsecutive(row, col, 0, 1, player) + countConsecutive(row, col, 0, -1, player) > 4 ||
+    countConsecutive(row, col, 1, 0, player) + countConsecutive(row, col, -1, 0, player) > 4 ||
+    countConsecutive(row, col, 1, 1, player) + countConsecutive(row, col, -1, -1, player) > 4 ||
+    countConsecutive(row, col, 1, -1, player) + countConsecutive(row, col, -1, 1, player) > 4
   );
 }
 
-function countConsecutive(row, col, rowDir, colDir) {
+function countConsecutive(row, col, rowDir, colDir, player) {
   let count = 0;
   let r = row + rowDir;
   let c = col + colDir;
   while (
-    r >= 0 &&
-    r < boardSize &&
-    c >= 0 &&
-    c < boardSize &&
-    board[r][c] === currentPlayer
+    r >= 0 && r < boardSize &&
+    c >= 0 && c < boardSize &&
+    board[r][c] === player
   ) {
     count++;
     r += rowDir;
