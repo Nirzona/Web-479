@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>🔮 Age Predictor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #2d042e, #0072ff);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      text-align: center;
+      padding: 20px;
+    }
+
+    h1 {
+      font-size: 3em;
+      margin-bottom: 10px;
+    }
+
+    p {
+      font-size: 1.2em;
+      margin-bottom: 30px;
+    }
+
+    input {
+      padding: 10px 15px;
+      font-size: 1em;
+      border: none;
+      border-radius: 30px;
+      outline: none;
+      width: 250px;
+      text-align: center;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 1em;
+      margin-top: 15px;
+      background-color: #ffffff;
+      color: #0072ff;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #e0f7fa;
+      transform: scale(1.05);
+    }
+
+    .result-box {
+      margin-top: 40px;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 20px;
+      border-radius: 20px;
+      width: 90%;
+      max-width: 400px;
+      backdrop-filter: blur(5px);
+      transition: 0.4s ease;
+    }
+
+    .age {
+      font-size: 2em;
+      font-weight: bold;
+    }
+
+    .emoji {
+      font-size: 3em;
+      margin-top: 10px;
+      animation: bounce 1s infinite alternate;
+    }
+
+    @keyframes bounce {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(-10px); }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🔮 Age Predictor</h1>
+  <p>Type a name and find out the predicted age!</p>
+
+  <input type="text" id="nameInput" placeholder="e.g. Alice" />
+  <br>
+  <button onclick="predictAge()">Predict Age</button>
+
+  <div id="result" class="result-box" style="display: none;">
+    <div id="message"></div>
+    <div class="emoji" id="emoji"></div>
+  </div>
+
+  <script>
+    function getEmoji(age) {
+      if (age < 13) return "🧒";
+      if (age < 20) return "👦";
+      if (age < 35) return "🧑";
+      if (age < 60) return "🧔";
+      return "👴";
+    }
+
+    async function predictAge() {
+      const name = document.getElementById('nameInput').value.trim();
+      const resultBox = document.getElementById('result');
+      const message = document.getElementById('message');
+      const emoji = document.getElementById('emoji');
+
+      if (!name) {
+        resultBox.style.display = 'block';
+        message.innerHTML = "❗ Please enter a name!";
+        emoji.innerHTML = "❓";
+        return;
+      }
+
+      const response = await fetch(`https://api.agify.io?name=${name}`);
+      const data = await response.json();
+
+      if (data.age !== null) {
+        message.innerHTML = `🧠 Based on data, the predicted age for "<strong>${name}</strong>" is <span class="age">${data.age}</span> years.`;
+        emoji.innerHTML = getEmoji(data.age);
+      } else {
+        message.innerHTML = `😕 Sorry, couldn't guess an age for "${name}".`;
+        emoji.innerHTML = "❌";
+      }
+
+      resultBox.style.display = 'block';
+    }
+  </script>
+
+</body>
+</html>
